@@ -4,7 +4,15 @@
 # TODO: Centralise the keyboard event handling (for quitting)
 # TODO: Allow exiting during video playback
 
-import sys, pygame, os, random, time, subprocess, random, threading, argparse
+import sys
+import pygame
+import os
+import random
+import time
+import subprocess
+import random
+import threading
+import argparse
 from pygame.locals import *
 from threading import Thread
 
@@ -12,37 +20,39 @@ from threading import Thread
 # original by using smoothscale and casting to int. This produces a much better
 # end result when enlarging.
 # Frank Raiser http://www.pygame.org/pcr/transform_scale/
-def aspect_scale(img,(bx,by)):
+
+def aspect_scale(img, (bx, by)):
     # Scales 'img' to fit into box bx/by.
     # This method will retain the original image's aspect ratio
-    ix,iy = img.get_size()
+    ix, iy = img.get_size()
     if ix > iy:
         # fit to width
-        scale_factor = bx/float(ix)
+        scale_factor = bx / float(ix)
         sy = scale_factor * iy
         if sy > by:
-            scale_factor = by/float(iy)
+            scale_factor = by / float(iy)
             sx = scale_factor * ix
             sy = by
         else:
             sx = bx
     else:
         # fit to height
-        scale_factor = by/float(iy)
+        scale_factor = by / float(iy)
         sx = scale_factor * ix
         if sx > bx:
-            scale_factor = bx/float(ix)
+            scale_factor = bx / float(ix)
             sx = bx
             sy = scale_factor * iy
         else:
             sy = by
-    return pygame.transform.smoothscale(img, (int(sx),int(sy)))
+    return pygame.transform.smoothscale(img, (int(sx), int(sy)))
+
 
 def wait_a_while(seconds):
     # Display the image for 8 seconds before moving on. Listen for
     # the Escape key to exit.
     for x in range(1, seconds * 2):
-        time.sleep (0.5)
+        time.sleep(0.5)
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -51,15 +61,20 @@ def wait_a_while(seconds):
 
 # Create command line arguments.
 parser = argparse.ArgumentParser()
-parser.add_argument("path", help = "Absolute path to the content directory.") # required
-parser.add_argument("-q", "--quiet", help="Don't display no content error.", action = "store_true") #optional
-parser.add_argument("-r", "--random", help="Sort the content randomly before playback.", action = "store_false") #optional
-parser.add_argument("-nc", "--nocointoss", help="Play videos every time they are encountered, don't flip a coin. Default False, coin will be flipped.", action = "store_false") # optional
-parser.add_argument("-s", "--seconds", help="Number of seconds to display each image. Default 8 seconds.", default = 8, type = int) # optional
+parser.add_argument(
+    "path", help="Absolute path to the content directory.")  # required
+parser.add_argument("-q", "--quiet", help="Don't display no content error.",
+                    action="store_true")  # optional
+parser.add_argument("-r", "--random", help="Sort the content randomly before playback.",
+                    action="store_false")  # optional
+parser.add_argument("-nc", "--nocointoss",
+                    help="Play videos every time they are encountered, don't flip a coin. Default False, coin will be flipped.", action="store_false")  # optional
+parser.add_argument("-s", "--seconds", help="Number of seconds to display each image. Default 8 seconds.",
+                    default=8, type=int)  # optional
 args = parser.parse_args()
 
 print("Loading content from: " + args.path)
-included_extensions = ['jpg','jpeg', 'bmp', 'png', 'mp4']
+included_extensions = ['jpg', 'jpeg', 'bmp', 'png', 'mp4']
 
 random.seed()
 pygame.init()
@@ -69,8 +84,9 @@ width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
 
 # Create a new surface - screen res, full screen and 32 bit colour, and hide
 # the mouse. Set the window title - it's going to be hidden, but why not.
-pygame.display.set_caption('goggl')
-display_screen = pygame.display.set_mode((width,height), pygame.FULLSCREEN, 32)
+pygame.display.set_caption('DisplayPy')
+display_screen = pygame.display.set_mode(
+    (width, height), pygame.FULLSCREEN, 32)
 pygame.mouse.set_visible(0)
 display_font = pygame.font.SysFont("roboto", 34)
 
@@ -93,9 +109,10 @@ while True:
 
         if not args.quiet:
             # We've not been told to be quiet, so display the error on screen
-            label = display_font.render("Content location empty.", 1, (255,0,0))
+            label = display_font.render(
+                "Content location empty.", 1, (255, 0, 0))
             display_screen.blit(label, (200, 200))
-            label = display_font.render(args.path, 1, (255,0,0))
+            label = display_font.render(args.path, 1, (255, 0, 0))
             display_screen.blit(label, (200, 300))
 
         pygame.display.flip()
@@ -122,12 +139,14 @@ while True:
                 img = pygame.image.load(content_fullname)
                 img = aspect_scale(img, (width, height))
 
-                # Fill screen with black to remove remnants of the previous image displayed
+                # Fill screen with black to remove remnants of the previous
+                # image displayed
                 display_screen.fill(000000)
 
                 # Place the resized image in the centre of the screen.
                 size = img.get_rect()
-                display_screen.blit(img, ((width / 2 - (size.width/2)), (height / 2 - (size.height/2))))
+                display_screen.blit(
+                    img, ((width / 2 - (size.width / 2)), (height / 2 - (size.height / 2))))
 
                 # Actually update the display.
                 pygame.display.flip()
@@ -141,12 +160,14 @@ while True:
 
                     print("Displaying Video Content: " + content_fullname)
 
-                    # Look for a subtitle (.srt) file with the same name to use with the video content.
+                    # Look for a subtitle (.srt) file with the same name to use
+                    # with the video content.
                     sub_path = os.path.splitext(content_fullname)[0] + ".srt"
 
                     if (os.path.isfile(sub_path)):
                         print ("Found a subtitle (.srt) file: " + sub_path)
-                        subprocess.call(["omxplayer", "--subtitles", sub_path, content_fullname])
+                        subprocess.call(
+                            ["omxplayer", "--subtitles", sub_path, content_fullname])
                     else:
                         subprocess.call(["omxplayer", content_fullname])
 
