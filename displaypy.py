@@ -137,7 +137,10 @@ while True:
                 # Open the image and scale it to the correct size.
                 print("Displaying: " + content_fullname)
                 img = pygame.image.load(content_fullname)
+                # Convert image to 32 to allow scaling
+                img = img.convert(32)
                 img = aspect_scale(img, (width, height))
+                
 
                 # Fill screen with black to remove remnants of the previous
                 # image displayed
