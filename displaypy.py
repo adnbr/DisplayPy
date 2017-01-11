@@ -59,6 +59,14 @@ def wait_a_while(seconds):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit("Told to quit (Escape key pressed)")
 
+                    
+# Create env vars for framebuffer - allows non-root users to run
+# the display, provided they are members of video and audio groups.
+# http://ajclarkson.co.uk/blog/pygame-no-root/
+os.putenv('SDL_FBDEV', '/dev/fb0')
+os.putenv('SDL_VIDEODRIVER', 'fbcon')
+os.putenv('SDL_NOMOUSE', '1')
+
 # Create command line arguments.
 parser = argparse.ArgumentParser()
 parser.add_argument(
