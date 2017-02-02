@@ -7,7 +7,6 @@
 import sys
 import pygame
 import os
-import random
 import time
 import datetime
 import subprocess
@@ -164,11 +163,14 @@ def display_content_from_folder(content_folder, seconds_per_image):
     # Get a list of all the eligible files from the folder, then shuffle them.
     print ("Refreshing content list.")
     file_names = safe_listdir(content_folder)
-    file_names = filter_date_content(file_names)
+
 
     if file_names is None:
         print ("Couldn't load files from " + content_folder + " as it doesn't exist.")
         return
+
+	#file_names = filter_date_content(file_names)
+
     # Randomisation requested.
     if (args.random):
         random.shuffle(file_names)
@@ -212,8 +214,8 @@ def display_content_from_folder(content_folder, seconds_per_image):
                 else:
                     break
 
-        else:
-            # We've got lost somewhere along the way, this file doesn't exist
+        elif not safe_fileexists(file):
+			# We've got lost somewhere along the way, this file doesn't exist
             # Quit out of the loop and reload all the files.
             print("Lost a file. Restarting the loop.")
             return
