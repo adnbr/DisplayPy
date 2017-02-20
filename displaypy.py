@@ -16,6 +16,7 @@ import argparse
 import re
 from pygame.locals import *
 from threading import Thread
+from dateutil.parser import parse
 
 # Scale image, keeping the aspect ratio the same. Slightly modified from the
 # original by using smoothscale and casting to int. This produces a much better
@@ -23,6 +24,7 @@ from threading import Thread
 # Frank Raiser http://www.pygame.org/pcr/transform_scale/
 
 included_extensions = ['jpg', 'jpeg', 'bmp', 'png', 'mp4']
+
 
 def aspect_scale(img, (bx, by)):
     # Scales 'img' to fit into box bx/by.
@@ -75,6 +77,7 @@ def play_video(content):
     else:
         subprocess.call(["omxplayer", content])
 
+
 def display_image(content):
     # Fill screen with black to remove remnants of the previous
     # image displayed
@@ -88,9 +91,10 @@ def display_image(content):
     img = img.convert(32)
     img = aspect_scale(img, (width, height))
 
-        # Place the resized image in the centre of the screen.
+    # Place the resized image in the centre of the screen.
     size = img.get_rect()
-    display_screen.blit(img, ((width / 2 - (size.width / 2)), (height / 2 - (size.height / 2))))
+    display_screen.blit(img, ((width / 2 - (size.width / 2)),
+                              (height / 2 - (size.height / 2))))
 
     # Actually update the display.
     pygame.display.flip()
@@ -98,7 +102,9 @@ def display_image(content):
 
 # Use to prevent a hang in the case of the network going away.
 # https://stackoverflow.com/questions/33786125/can-os-listdir-hang-with-network-drives-what-system-call-does-it-use
-def safe_listdir(directory, timeout = 4):
+
+
+def safe_listdir(directory, timeout=4):
     contents = []
     t = threading.Thread(target=lambda: contents.extend(os.listdir(directory)))
     t.daemon = True  # don't delay program's exit
@@ -108,7 +114,8 @@ def safe_listdir(directory, timeout = 4):
         return None
     return contents
 
-def safe_fileexists(file, timeout = 4):
+
+def safe_fileexists(file, timeout=4):
     print "Checking if " + file + " exists."
     t = threading.Thread(target=lambda: os.path.exists(file))
     t.daemon = True  # don't delay program's exit
@@ -117,6 +124,7 @@ def safe_fileexists(file, timeout = 4):
     if t.is_alive():
         return False
     return True
+
 
 def display_no_content():
     # There are no files to display, so display an error/warning message
@@ -133,43 +141,50 @@ def display_no_content():
 
     pygame.display.flip()
 
+
+def file_has_valid_date(file_name):
+    if file_name.startswith("!"):
+        p = re.compile(ur"!(.*?)-(.*?)!")
+        regex_result = re.search(p, file_name)
+        action = regex_result.group(1)
+        display_date = parse(regex_result.group(2), dayfirst=True).date()
+        if action == "UNTIL":
+            if display_date < datetime.datetime.today().date():
+                print("Content no longer relevant, removing " + file_name)
+                return False
+        if action == "ONLY":
+            if display_date != datetime.datetime.today().date():
+                print("Content not for display today, removing " + file_name)
+                return False
+    return True
+
 # Some of the files will have a date sensitivity, process these and remove them
 # from the list if required.
 # !UNTIL-DDMMYYYY!filename.jpg - Display a file if the specified date has not passed.
 # !ONLY-DDMMYYYY!filename.jpg - Display a file only on the date specified.
+
+
 def filter_date_content(file_names):
-	for file in file_names[:]:
-		print ("Checking file" + file)
-    		if file.startswith("!"):
-			print ("Starts with !")
-			p = re.compile(ur"!(.*?)-(.*?)!")
-			regex_result = re.search(p, file)
-			action = regex_result.group(1)
-			print action
-			display_date = datetime.datetime.strptime(regex_result.group(2), "%d%m%Y").date()
-			print display_date
-			if action == "UNTIL":
-				if display_date < datetime.datetime.today().date():
-					print("Content no longer relevant, removing " + file)
-					file_names.remove(file)
-			if action == "ONLY":
-				if display_date != datetime.datetime.today().date():
-					file_names.remove(file)
-					print("Content not for display today, removing " + file)
-	return file_names
+    filtered_list = []
+    for file in file_names:
+        print ("Checking file" + file)
+        if file_has_valid_date(file):
+            filtered_list.append(file)
+    return filtered_list
 
 # Loop this continually
+
+
 def display_content_from_folder(content_folder, seconds_per_image):
     # Get a list of all the eligible files from the folder, then shuffle them.
     print ("Refreshing content list.")
     file_names = safe_listdir(content_folder)
-
+    file_names = filter_date_content(file_names)
 
     if file_names is None:
-        print ("Couldn't load files from " + content_folder + " as it doesn't exist.")
+        print ("Couldn't load files from " + content_folder +
+               " as it doesn't exist or contains no content.")
         return
-
-	#file_names = filter_date_content(file_names)
 
     # Randomisation requested.
     if (args.random):
@@ -205,7 +220,7 @@ def display_content_from_folder(content_folder, seconds_per_image):
                     play_video(content_fullname)
                 else:
                     print("Skipped Video Content: " + content_fullname)
-            else: # is an image, display it.
+            else:  # is an image, display it.
                 # Open the image and scale it to the correct size.
                 print("Displaying: " + content_fullname)
                 did_display = display_image(content_fullname)
@@ -215,12 +230,13 @@ def display_content_from_folder(content_folder, seconds_per_image):
                     break
 
         elif not safe_fileexists(file):
-			# We've got lost somewhere along the way, this file doesn't exist
+            # We've got lost somewhere along the way, this file doesn't exist
             # Quit out of the loop and reload all the files.
             print("Lost a file. Restarting the loop.")
             return
 
-def count_files_in_folder (content_folder):
+
+def count_files_in_folder(content_folder):
     return len([fn for fn in safe_listdir(content_folder) if any(fn.endswith(ext) for ext in included_extensions)])
 
 
@@ -231,7 +247,8 @@ os.putenv('SDL_NOMOUSE', '1')
 
 # Create command line arguments.
 parser = argparse.ArgumentParser()
-parser.add_argument("path", help="Absolute path to the content directory.")  # required
+parser.add_argument(
+    "path", help="Absolute path to the content directory.")  # required
 parser.add_argument("-q", "--quiet", help="Don't display no content error.",
                     action="store_true")  # optional
 parser.add_argument("-r", "--random", help="Sort the content randomly before playback.",
@@ -241,7 +258,8 @@ parser.add_argument("-nc", "--nocointoss",
 parser.add_argument("-s", "--seconds", help="Number of seconds to display each image. Default 8 seconds.",
                     default=8, type=int)  # optional
 parser.add_argument("-p", "--period", help="Lobby mode only. How many seconds should the default images be displayed for before showing the slideshow. Default is 300 seconds (5 minutes).", default=300, type=int)
-parser.add_argument('mode', choices=('simple', 'lobby'), default="simple", help="Simple mode displays all the images in a folder. Lobby mode displays a default image, override images when applicable and intersperses slideshow images.")
+parser.add_argument('mode', choices=('simple', 'lobby'), default="simple",
+                    help="Simple mode displays all the images in a folder. Lobby mode displays a default image, override images when applicable and intersperses slideshow images.")
 
 
 args = parser.parse_args()
@@ -258,7 +276,8 @@ width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
 # Create a new surface - screen res, full screen and 32 bit colour, and hide
 # the mouse. Set the window title - it's going to be hidden, but why not.
 pygame.display.set_caption('DisplayPy')
-display_screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
+display_screen = pygame.display.set_mode(
+    (width, height), pygame.FULLSCREEN, 32)
 pygame.mouse.set_visible(0)
 display_font = pygame.font.SysFont("roboto", 34)
 
@@ -279,5 +298,6 @@ elif (args.mode == "lobby"):
             default_count = count_files_in_folder(default_path)
             default_seconds_per_image = int(round(args.period / default_count))
 
-            display_content_from_folder(default_path, default_seconds_per_image)
+            display_content_from_folder(
+                default_path, default_seconds_per_image)
             display_content_from_folder(content_path, args.seconds)
