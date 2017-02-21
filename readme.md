@@ -6,14 +6,40 @@ It will loop through a folder of videos and pictures, displaying them on the scr
 
 ## Usage
 
-python displaypy.py /path/to/content [-q|--quiet] [-nf|noflip] [-s|--seconds x] [-r|--random]
+python displaypy.py [-h] [-q] [-r] [-nc] [-s SECONDS] [-p PERIOD] /absolute/path/to/content {simple,lobby}
 
-- **-q | --quiet** - Do not display an error message if there is no content.
-- **-nc | --nocointoss** - Play a video every time it is encountered, don't flip a coin.
-- **-s | --seconds _x_** - Display each image for _x_ seconds. Default 8.
-- **-r | --random** - Randomise the order the content is displayed.
+### Required arguments:
+* **path**  
+  Absolute path to the content directory.
+* **{simple,lobby}**  
+  Simple mode displays all the images in a folder.  
+  Lobby  mode displays a default image, override images when applicable and intersperses slideshow images.
 
-The only mandatory argument is the path to the content. All others are optional.
+### Optional arguments:
+* **-h, --help**  
+  Show this help message and exit
+
+* **-q, --quiet**  
+  Don't display no content error.
+
+* **-r, --random**  
+  Sort the content randomly before playback.
+
+* **-nc, --nocointoss**  
+  Play videos every time they are encountered, don't
+  flip a coin. Default False, coin will be flipped.
+
+* **-s SECONDS, --seconds SECONDS**  
+  Number of seconds to display each image. Default 8 seconds.
+* **-p PERIOD, --period PERIOD**  
+  Lobby mode only. How many seconds should the default images be displayed for before showing the slideshow. Default is 300 seconds (5 minutes).
+
+## Installation
+
+For use on a typical Raspberry Pi image you should only have to install the dateutil module for python.
+
+`pip install python-dateutil`
+
 
 ## Screen size
 
@@ -32,7 +58,17 @@ A list of files is generated at the start of the script, and each item of conten
 
 Should a file be missing when the script tries to load it, the list of files will be regenerated and the process will start from the beginning. This allows the content manager to update the display at any time, adding and removing images and videos as they see fit. New content will be introduced into the list once the last item has been displayed instead.
 
-If there is no content in the folder passed from the command line an error message will be displayed on screen. This can be disabled by using the '-q/--quiet' command line argument which will cause a black screen to be displayed.
+If there is no content in the folder passed from the command line an error message will be displayed on screen. This can be disabled by using the '-q/--quiet' command line argument which will cause a black screen to be displayed instead.
+
+## Date filtering content
+
+In all modes it is possible to filter content that is displayed by date, for example to only show content on one day or up to a certain date.
+
+`!UNTIL-25-02-2018!filename.jpg` will display up to and including the date specified.
+
+`!ONLY-25-02-2018!filename.jpg` will only display on the date specified and not before and not after.
+
+The format is always `DAY` followed by `MONTH` followed by `YEAR` strictly seperated by hyphens. The exact format requirement of each segment is not strict as the string is parsed by python's dateutil. For example, month will accept "February", "02" and "Feb".
 
 ## Videos
 
