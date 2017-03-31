@@ -13,13 +13,13 @@ It will loop through a folder of videos and pictures, displaying them on the scr
 ### Required arguments:
 * **path**  
   Absolute path to the content directory.
-* **simple|lobby**  
+* **simple** _or_ **lobby**  
   Simple mode displays all the images in a folder.  
   Lobby  mode displays a default image, override images when applicable and intersperses slideshow images.
 
 ### Optional arguments:
 * **-h, --help**  
-  Show this help message and exit
+  Show a help message and exit
 
 * **-q, --quiet**  
   Don't display no content error.
