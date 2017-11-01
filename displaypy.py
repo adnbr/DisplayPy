@@ -147,15 +147,22 @@ def file_has_valid_date(file_name):
         p = re.compile(ur"!(.*?)-(.*?)!")
         regex_result = re.search(p, file_name)
         action = regex_result.group(1)
-        display_date = parse(regex_result.group(2), dayfirst=True).date()
-        if action == "UNTIL":
-            if display_date < datetime.datetime.today().date():
-                print("Content no longer relevant, removing " + file_name)
-                return False
-        if action == "ONLY":
-            if display_date != datetime.datetime.today().date():
-                print("Content not for display today, removing " + file_name)
-                return False
+        try:
+            display_date = parse(regex_result.group(2), dayfirst=True).date()
+            if action == "UNTIL":
+                if display_date < datetime.datetime.today().date():
+                    print("Content no longer relevant, removing " + file_name)
+                    return False
+            if action == "ONLY":
+                if display_date != datetime.datetime.today().date():
+                    print("Content not for display today, removing " + file_name)
+                    return False
+        # Problems with users entering the wrong date.
+        except ValueError:
+            print("Date error, removing from display. Check the validity of " + file_name)
+            # Don't display this file because we can't be sure that it is
+            # meant to be displayed today.
+            return False
     return True
 
 # Some of the files will have a date sensitivity, process these and remove them
